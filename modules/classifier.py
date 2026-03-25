@@ -6,7 +6,7 @@ from typing import Callable
 from openai import OpenAI
 
 
-UNCLASSIFIED = "미분류"
+UNCLASSIFIED = "분류실패"
 
 
 def classify_articles(

@@ -8,36 +8,41 @@ from openai import OpenAI
 from modules.classifier import classify_articles
 from modules.daum_search import search_daum_news
 from modules.excel_writer import create_excel
-from modules.file_parser import parse_input_file
 from modules.naver_search import search_naver_news
 
+
 def _secret(key: str) -> str:
-    """Streamlit Cloud Secrets 우선, 없으면 .env 환경변수 fallback"""
+    """Streamlit Cloud Secrets 우선, 없으면 환경변수 fallback"""
     try:
         return st.secrets.get(key, os.getenv(key, ""))
     except FileNotFoundError:
         return os.getenv(key, "")
 
+
 # ────────────────────────────────────────────────
 # 페이지 설정
 # ────────────────────────────────────────────────
 st.set_page_config(
-    page_title="뉴스 모니터링",
+    page_title="뉴스 모니터링 어시스턴트",
     page_icon="📰",
     layout="wide",
 )
 
-st.title("📰 뉴스 모니터링 프로그램")
+st.title("📰 뉴스 모니터링 어시스턴트")
 
 # ────────────────────────────────────────────────
 # 세션 상태 초기화
 # ────────────────────────────────────────────────
-if "parsed_data" not in st.session_state:
-    st.session_state.parsed_data = None
 if "excel_bytes" not in st.session_state:
     st.session_state.excel_bytes = None
 if "result_summary" not in st.session_state:
     st.session_state.result_summary = None
+
+# 분류 기준 행 관리 (고유 ID 방식)
+if "cat_ids" not in st.session_state:
+    st.session_state.cat_ids = [0, 1]   # 기본 2개
+if "cat_counter" not in st.session_state:
+    st.session_state.cat_counter = 2
 
 # ────────────────────────────────────────────────
 # API 키 로드 (내부용, UI 노출 없음)
@@ -46,7 +51,6 @@ openai_key = _secret("OPENAI_API_KEY")
 naver_client_id = _secret("NAVER_CLIENT_ID")
 naver_client_secret = _secret("NAVER_CLIENT_SECRET")
 
-# 키 누락 시 경고 표시
 missing = []
 if not openai_key:
     missing.append("OPENAI_API_KEY")
@@ -58,48 +62,63 @@ if missing:
 # ────────────────────────────────────────────────
 # 메인 영역: 2컬럼 레이아웃
 # ────────────────────────────────────────────────
-col_left, col_right = st.columns([1, 1], gap="large")
+col_left, col_right = st.columns([3, 2], gap="large")
 
-# ── 좌측: 파일 업로드 ──────────────────────────
+# ── 좌측: 키워드 & 분류 기준 입력 ──────────────
 with col_left:
-    st.subheader("① 입력 파일 업로드")
-    uploaded_file = st.file_uploader(
-        "키워드 및 분류 기준이 작성된 .docx 파일을 업로드하세요",
-        type=["docx"],
-        help="파일 형식이 달라도 GPT가 내용을 자동으로 해석합니다.",
+
+    # 키워드
+    st.subheader("① 키워드")
+    keywords_raw = st.text_area(
+        "모니터링할 키워드를 쉼표(,)로 구분하여 입력하세요",
+        placeholder="예: 삼성전자, 이재용, 갤럭시",
+        height=80,
+        label_visibility="collapsed",
     )
 
-    if uploaded_file:
-        if st.button("📄 파일 분석", use_container_width=True):
-            if not openai_key:
-                st.error("사이드바에 OpenAI API Key를 입력해주세요.")
-            else:
-                with st.spinner("GPT가 파일을 분석하는 중..."):
-                    try:
-                        client = OpenAI(api_key=openai_key)
-                        parsed = parse_input_file(
-                            io.BytesIO(uploaded_file.read()), client
-                        )
-                        st.session_state.parsed_data = parsed
-                        st.session_state.excel_bytes = None
-                        st.session_state.result_summary = None
-                    except Exception as e:
-                        st.error(f"파일 분석 실패: {e}")
+    st.divider()
 
-    # 파일 분석 결과 표시
-    if st.session_state.parsed_data:
-        data = st.session_state.parsed_data
-        st.success("✅ 파일 분석 완료")
+    # 분류 기준
+    st.subheader("② 분류 기준")
+    st.caption("시트명과 해당 시트에 넣을 기사의 조건을 입력하세요.")
 
-        with st.expander("분석 결과 확인", expanded=True):
-            st.markdown(f"**키워드:** {', '.join(data.get('keywords', []))}")
-            st.markdown("**분류 기준:**")
-            for cat, desc in data.get("categories", {}).items():
-                st.markdown(f"- **{cat}**: {desc}")
+    # 헤더
+    h1, h2, h3 = st.columns([2, 5, 1])
+    h1.markdown("**시트명**")
+    h2.markdown("**분류 조건**")
 
-# ── 우측: 검색 설정 ────────────────────────────
+    # 분류 기준 행 목록
+    for cat_id in list(st.session_state.cat_ids):
+        c1, c2, c3 = st.columns([2, 5, 1])
+        with c1:
+            st.text_input(
+                "시트명",
+                key=f"cat_name_{cat_id}",
+                placeholder="예: 부정적",
+                label_visibility="collapsed",
+            )
+        with c2:
+            st.text_input(
+                "분류 조건",
+                key=f"cat_cond_{cat_id}",
+                placeholder="예: 키워드에 대해 부정적 내용이 있는 경우",
+                label_visibility="collapsed",
+            )
+        with c3:
+            st.write("")
+            if st.button("✕", key=f"del_{cat_id}", help="삭제"):
+                st.session_state.cat_ids.remove(cat_id)
+                st.rerun()
+
+    # 시트 추가 버튼
+    if st.button("＋ 시트 추가", use_container_width=False):
+        st.session_state.cat_ids.append(st.session_state.cat_counter)
+        st.session_state.cat_counter += 1
+        st.rerun()
+
+# ── 우측: 모니터링 설정 ────────────────────────
 with col_right:
-    st.subheader("② 검색 설정")
+    st.subheader("③ 모니터링 설정")
 
     search_date = st.date_input("날짜", value=date.today())
 
@@ -109,7 +128,7 @@ with col_right:
     with col_t2:
         end_time = st.time_input("종료 시간", value=time(13, 0))
 
-    st.markdown("**검색 엔진 선택**")
+    st.markdown("**검색 엔진**")
     use_naver = st.checkbox("네이버 뉴스", value=True)
     use_daum = st.checkbox("다음 뉴스", value=True)
 
@@ -121,10 +140,16 @@ with col_right:
 # ────────────────────────────────────────────────
 st.divider()
 
-can_search = (
-    st.session_state.parsed_data is not None
-    and (use_naver or use_daum)
-)
+# 입력값 수집
+keywords = [k.strip() for k in keywords_raw.split(",") if k.strip()]
+categories = {}
+for cat_id in st.session_state.cat_ids:
+    name = st.session_state.get(f"cat_name_{cat_id}", "").strip()
+    cond = st.session_state.get(f"cat_cond_{cat_id}", "").strip()
+    if name:
+        categories[name] = cond
+
+can_search = bool(keywords) and bool(categories) and (use_naver or use_daum)
 
 if st.button(
     "🔍 검색 시작",
@@ -132,17 +157,12 @@ if st.button(
     disabled=not can_search,
     use_container_width=True,
 ):
-    # 입력값 검증
     if start_time >= end_time:
         st.error("시작 시간이 종료 시간보다 앞이어야 합니다.")
         st.stop()
 
     start_dt = datetime.combine(search_date, start_time)
     end_dt = datetime.combine(search_date, end_time)
-
-    data = st.session_state.parsed_data
-    keywords = data.get("keywords", [])
-    categories = data.get("categories", {})
 
     # ── 진행 상황 UI ──
     status_box = st.empty()
@@ -215,10 +235,7 @@ if st.button(
     log_box.caption("엑셀 생성 중...")
 
     try:
-        excel_bytes = create_excel(
-            classified,
-            list(categories.keys()),
-        )
+        excel_bytes = create_excel(classified, list(categories.keys()))
         st.session_state.excel_bytes = excel_bytes
     except Exception as e:
         st.error(f"엑셀 생성 실패: {e}")
@@ -229,11 +246,11 @@ if st.button(
     status_box.success(f"✅ 완료! 총 {len(unique_articles)}건 처리")
     log_box.empty()
 
-    # 카테고리별 건수 요약 (일람/미분류는 항상 포함)
+    # 카테고리별 건수 요약
     summary = {"일람": len(unique_articles)}
     for cat in categories.keys():
         summary[cat] = sum(1 for a in classified if a.get("category") == cat)
-    summary["미분류"] = sum(1 for a in classified if a.get("category") == "미분류")
+    summary["분류실패"] = sum(1 for a in classified if a.get("category") == "분류실패")
     st.session_state.result_summary = summary
 
 # ────────────────────────────────────────────────

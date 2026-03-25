@@ -15,7 +15,7 @@ HEADER_FG = "FFFFFF"
 
 
 SHEET_ILAM = "일람"
-SHEET_UNCLASSIFIED = "미분류"
+SHEET_UNCLASSIFIED = "분류실패"
 
 
 def create_excel(
