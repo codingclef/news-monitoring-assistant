@@ -135,6 +135,9 @@ with col_right:
     if not use_naver and not use_daum:
         st.warning("검색 엔진을 최소 1개 이상 선택해주세요.")
 
+    st.divider()
+    entered_pw = st.text_input("비밀번호", type="password", placeholder="비밀번호를 입력하세요")
+
 # ────────────────────────────────────────────────
 # 모니터링 시작 버튼
 # ────────────────────────────────────────────────
@@ -149,7 +152,10 @@ for cat_id in st.session_state.cat_ids:
     if name:
         categories[name] = cond
 
-can_search = bool(keywords) and bool(categories) and (use_naver or use_daum)
+app_password = _secret("APP_PASSWORD")
+password_ok = (entered_pw == app_password) if app_password else True
+
+can_search = bool(keywords) and bool(categories) and (use_naver or use_daum) and password_ok
 
 if st.button(
     "🔍 모니터링 시작",
