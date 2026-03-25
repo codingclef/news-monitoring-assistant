@@ -111,7 +111,11 @@ with col_left:
                 st.rerun()
 
     # 시트 추가 버튼
-    if st.button("＋ 시트 추가", use_container_width=False):
+    if st.button(
+        "＋ 시트 추가",
+        use_container_width=False,
+        help="💡 일람 (수집된 모든 기사)과 보류 (AI가 분류하지 못한 기사) 시트는 입력 여부와 관계없이 항상 자동으로 생성됩니다.",
+    ):
         st.session_state.cat_ids.append(st.session_state.cat_counter)
         st.session_state.cat_counter += 1
         st.rerun()
@@ -122,11 +126,15 @@ with col_right:
 
     search_date = st.date_input("날짜", value=date.today())
 
+    _time_help = (
+        "⏱ 언론사 기사가 검색엔진에 노출되기까지 수 분~수십 분 지연이 발생할 수 있습니다.\n\n"
+        "예) 9시부터 모니터링하려면 시작 시간을 08:50으로 설정하는 것을 권장합니다."
+    )
     col_t1, col_t2 = st.columns(2)
     with col_t1:
-        start_time = st.time_input("시작 시간", value=time(9, 0))
+        start_time = st.time_input("시작 시간", value=time(9, 0), help=_time_help)
     with col_t2:
-        end_time = st.time_input("종료 시간", value=time(13, 0))
+        end_time = st.time_input("종료 시간", value=time(13, 0), help=_time_help)
 
     st.markdown("**검색 엔진**")
     use_naver = st.checkbox("네이버 뉴스", value=True)
@@ -256,7 +264,7 @@ if st.button(
     summary = {"일람": len(unique_articles)}
     for cat in categories.keys():
         summary[cat] = sum(1 for a in classified if a.get("category") == cat)
-    summary["분류실패"] = sum(1 for a in classified if a.get("category") == "분류실패")
+    summary["보류"] = sum(1 for a in classified if a.get("category") == "보류")
     st.session_state.result_summary = summary
 
 # ────────────────────────────────────────────────
@@ -278,3 +286,33 @@ if st.session_state.excel_bytes:
         use_container_width=True,
         type="primary",
     )
+
+# ────────────────────────────────────────────────
+# 엑셀 출력 형식 미리보기
+# ────────────────────────────────────────────────
+st.divider()
+with st.expander("📋 엑셀 출력 형식 미리보기"):
+    st.markdown("**공통 사항**")
+    st.caption("• 일람/보류 시트는 항상 자동 생성됩니다.\n• 모든 시트 맨 앞에 No. 컬럼(행 번호)이 있습니다.")
+
+    st.markdown("**일람 시트** (수집된 모든 기사)")
+    st.table({
+        "No.": [1, 2],
+        "키워드": ["삼성전자", "이재용"],
+        "날짜/시간": ["2024-03-25 09:30", "2024-03-25 10:15"],
+        "언론사": ["한국경제", "조선일보"],
+        "기사제목": ["삼성전자 신형 반도체 공개", "이재용 회장 해외 출장"],
+        "링크": ["https://...", "https://..."],
+        "분류결과": ["단순언급", "부정적"],
+    })
+
+    st.markdown("**그 외 시트** (각 분류 기준 / 보류)")
+    st.table({
+        "No.": [1, 2],
+        "키워드": ["삼성전자", "이재용"],
+        "날짜/시간": ["2024-03-25 09:30", "2024-03-25 10:15"],
+        "언론사": ["한국경제", "조선일보"],
+        "기사제목": ["삼성전자 신형 반도체 공개", "이재용 회장 해외 출장"],
+        "링크": ["https://...", "https://..."],
+        "분류이유": ["제품 출시 관련 단순 보도", "경영 활동 관련 부정적 내용 포함"],
+    })
