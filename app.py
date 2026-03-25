@@ -136,7 +136,7 @@ with col_right:
         st.warning("검색 엔진을 최소 1개 이상 선택해주세요.")
 
 # ────────────────────────────────────────────────
-# 검색 시작 버튼
+# 모니터링 시작 버튼
 # ────────────────────────────────────────────────
 st.divider()
 
@@ -152,7 +152,7 @@ for cat_id in st.session_state.cat_ids:
 can_search = bool(keywords) and bool(categories) and (use_naver or use_daum)
 
 if st.button(
-    "🔍 검색 시작",
+    "🔍 모니터링 시작",
     type="primary",
     disabled=not can_search,
     use_container_width=True,
