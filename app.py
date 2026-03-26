@@ -277,7 +277,9 @@ with col_right:
 
     st.markdown(S["search_engine_label"])
     use_naver = st.checkbox(S["naver_checkbox"], value=True)
+    st.caption(S["tip_naver_limit"])
     use_daum = st.checkbox(S["daum_checkbox"], value=True)
+    st.caption(S["tip_daum_limit"])
 
     if "engines" in st.session_state.val_errors:
         st.error(S["engines_err"])
@@ -348,6 +350,7 @@ if monitoring_clicked:
 
         # ── STEP 1: 기사 수집 ──
         status_box.info(S["status_collecting"])
+        st.caption(S["tip_stop"])
         for i, keyword in enumerate(keywords):
             _log(S["log_collecting"].format(keyword=keyword, i=i + 1, total=total_steps))
 

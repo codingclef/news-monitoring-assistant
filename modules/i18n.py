@@ -71,6 +71,9 @@ KO: dict[str, str] = {
     # 진행
     "spinner_text": "모니터링 진행 중...",
     "elapsed_label": "경과",
+    "tip_stop": "🔄 모니터링을 중단하려면 브라우저를 새로고침(F5)하세요.",
+    "tip_naver_limit": "키워드당 최대 1,000건 수집",
+    "tip_daum_limit": "키워드당 최대 약 200~300건 수집",
     "status_collecting": "🔎 기사 수집 중...",
     "status_classifying": "🤖 AI 분류 중...",
     "status_excel": "📊 엑셀 파일 생성 중...",
@@ -195,6 +198,9 @@ JA: dict[str, str] = {
     # 進行
     "spinner_text": "モニタリング処理中...",
     "elapsed_label": "経過",
+    "tip_stop": "🔄 モニタリングを中断するにはブラウザを更新(F5)してください。",
+    "tip_naver_limit": "キーワードあたり最大1,000件収集",
+    "tip_daum_limit": "キーワードあたり最大約200〜300件収集",
     "status_collecting": "🔎 記事収集中...",
     "status_classifying": "🤖 AI分類中...",
     "status_excel": "📊 Excelファイル生成中...",
