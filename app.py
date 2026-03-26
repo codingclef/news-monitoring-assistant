@@ -111,25 +111,28 @@ with col_left:
             label_visibility="collapsed",
         )
     with col_save:
-        if st.button("저장", use_container_width=True):
-            kw = st.session_state.get("keywords_input", "").strip()
-            cats = {}
-            for cid in st.session_state.cat_ids:
-                n = st.session_state.get(f"cat_name_{cid}", "").strip()
-                c = st.session_state.get(f"cat_cond_{cid}", "").strip()
-                if n:
-                    cats[n] = c
+        save_clicked = st.button("저장", use_container_width=True)
 
-            if not preset_name.strip():
-                st.error("프리셋 이름을 입력해주세요.")
-            elif not kw:
-                st.error("키워드를 입력한 후 저장해주세요.")
-            elif not cats:
-                st.error("분류 기준을 1개 이상 입력한 후 저장해주세요.")
-            else:
-                if save_preset(preset_name.strip(), kw, cats):
-                    st.success(f"'{preset_name}' 저장 완료!")
-                    st.rerun()
+    # 에러/성공 메시지는 컬럼 바깥에서 표시 (두 컬럼 합친 너비)
+    if save_clicked:
+        kw = st.session_state.get("keywords_input", "").strip()
+        cats = {}
+        for cid in st.session_state.cat_ids:
+            n = st.session_state.get(f"cat_name_{cid}", "").strip()
+            c = st.session_state.get(f"cat_cond_{cid}", "").strip()
+            if n:
+                cats[n] = c
+
+        if not preset_name.strip():
+            st.error("프리셋 이름을 입력해주세요.")
+        elif not kw:
+            st.error("키워드를 입력한 후 저장해주세요.")
+        elif not cats:
+            st.error("분류 기준을 1개 이상 입력한 후 저장해주세요.")
+        else:
+            if save_preset(preset_name.strip(), kw, cats):
+                st.success(f"'{preset_name}' 저장 완료!")
+                st.rerun()
 
     st.divider()
 
