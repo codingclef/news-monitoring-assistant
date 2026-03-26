@@ -138,7 +138,9 @@ def _parse_date(date_str: str) -> datetime | None:
         except ValueError:
             continue
 
-    now = datetime.now()
+    # 서버 시간대 무관하게 KST 현재 시각 사용 (UTC+9)
+    from datetime import timezone
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None) + timedelta(hours=9)
 
     # 상대 시간: "3분 전", "2시간 전"
     match = re.search(r"(\d+)분\s*전", date_str)
