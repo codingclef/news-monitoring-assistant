@@ -95,6 +95,7 @@ with col_left:
             if st.button("불러오기", use_container_width=True):
                 p = presets[selected_preset]
                 st.session_state["preset_keywords"] = p["keywords"]
+                st.session_state["preset_name_input"] = selected_preset
                 # 분류기준 행 초기화 후 재구성
                 new_ids = list(range(len(p["categories"])))
                 st.session_state.cat_ids = new_ids
@@ -117,6 +118,7 @@ with col_left:
             "프리셋 이름",
             placeholder="예: 장애인고용공단_평일",
             label_visibility="collapsed",
+            key="preset_name_input",
         )
     with col_save:
         save_clicked = st.button("저장", use_container_width=True)
