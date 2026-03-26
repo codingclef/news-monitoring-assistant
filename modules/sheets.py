@@ -99,3 +99,72 @@ def delete_preset(name: str) -> bool:
     except Exception as e:
         st.warning(f"프리셋 삭제 실패: {e}")
         return False
+
+
+# ── 피드백 ──────────────────────────────────────
+
+FEEDBACK_SHEET = "피드백"
+FEEDBACK_HEADER = ["기사제목", "올바른분류"]
+
+
+def _get_feedback_sheet():
+    """Google Sheets 피드백 워크시트 연결"""
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=SCOPES,
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(st.secrets["GOOGLE_SHEET_ID"])
+
+    try:
+        ws = sheet.worksheet(FEEDBACK_SHEET)
+    except gspread.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=FEEDBACK_SHEET, rows=1000, cols=2)
+        ws.append_row(FEEDBACK_HEADER)
+
+    if ws.row_values(1) != FEEDBACK_HEADER:
+        ws.insert_row(FEEDBACK_HEADER, 1)
+
+    return ws
+
+
+def load_feedback() -> list[dict]:
+    """저장된 피드백 예시 목록 반환"""
+    try:
+        ws = _get_feedback_sheet()
+        rows = ws.get_all_records()
+        return [
+            {"title": str(r.get("기사제목", "")), "category": str(r.get("올바른분류", ""))}
+            for r in rows
+            if r.get("기사제목") and r.get("올바른분류")
+        ]
+    except Exception as e:
+        st.warning(f"피드백 불러오기 실패: {e}")
+        return []
+
+
+def save_feedback(examples: list[dict]) -> bool:
+    """피드백 저장. 같은 제목이 있으면 덮어씁니다."""
+    try:
+        ws = _get_feedback_sheet()
+        rows = ws.get_all_values()
+        existing = {str(r[0]).strip(): i + 2 for i, r in enumerate(rows[1:]) if r}
+
+        new_rows = []
+        for ex in examples:
+            title = ex.get("title", "").strip()
+            category = ex.get("category", "").strip()
+            if not title or not category:
+                continue
+            if title in existing:
+                ws.update(f"A{existing[title]}:B{existing[title]}", [[title, category]])
+            else:
+                new_rows.append([title, category])
+
+        if new_rows:
+            ws.append_rows(new_rows)
+        return True
+
+    except Exception as e:
+        st.warning(f"피드백 저장 실패: {e}")
+        return False

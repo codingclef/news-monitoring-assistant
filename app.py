@@ -2,6 +2,8 @@ import io
 import os
 from datetime import date, datetime, time
 
+import pandas as pd
+
 import streamlit as st
 from openai import OpenAI
 
@@ -9,7 +11,7 @@ from modules.classifier import classify_articles
 from modules.daum_search import search_daum_news
 from modules.excel_writer import create_excel
 from modules.naver_search import search_naver_news
-from modules.sheets import load_presets, save_preset, delete_preset
+from modules.sheets import load_presets, save_preset, delete_preset, load_feedback, save_feedback
 
 
 def _secret(key: str) -> str:
@@ -40,6 +42,12 @@ if "result_summary" not in st.session_state:
     st.session_state.result_summary = None
 if "val_errors" not in st.session_state:
     st.session_state.val_errors = set()
+if "classified" not in st.session_state:
+    st.session_state.classified = None
+if "categories_state" not in st.session_state:
+    st.session_state.categories_state = {}
+if "run_id" not in st.session_state:
+    st.session_state.run_id = 0
 
 # 분류 기준 행 관리 (고유 ID 방식)
 if "cat_ids" not in st.session_state:
@@ -313,6 +321,7 @@ if st.button("🔍 모니터링 시작", type="primary", use_container_width=Tru
     # ── STEP 2: GPT 분류 ──
     status_box.info("🤖 AI 분류 중...")
     client = OpenAI(api_key=openai_key)
+    feedback_examples = load_feedback()
 
     def on_progress(current: int, total: int):
         log_box.caption(f"분류 중: {current}/{total}건")
@@ -324,6 +333,7 @@ if st.button("🔍 모니터링 시작", type="primary", use_container_width=Tru
             categories,
             client,
             progress_callback=on_progress,
+            feedback_examples=feedback_examples,
         )
     except Exception as e:
         st.error(f"분류 중 오류 발생: {e}")
@@ -344,6 +354,11 @@ if st.button("🔍 모니터링 시작", type="primary", use_container_width=Tru
     progress_bar.progress(1.0)
     status_box.success(f"✅ 완료! 총 {len(unique_articles)}건 처리")
     log_box.empty()
+
+    # 결과 세션 저장
+    st.session_state.classified = classified
+    st.session_state.categories_state = categories
+    st.session_state.run_id += 1
 
     # 카테고리별 건수 요약
     summary = {"일람": len(unique_articles)}
@@ -400,3 +415,97 @@ with st.expander("📋 엑셀 출력 형식 미리보기"):
         "링크": ["https://...", "https://..."],
         "분류이유": ["제품 출시 관련 단순 보도", "경영 활동 관련 부정적 내용 포함"],
     })
+
+# ────────────────────────────────────────────────
+# 분류 결과 확인 & 피드백
+# ────────────────────────────────────────────────
+if st.session_state.classified is not None:
+    st.divider()
+    st.subheader("💬 분류 결과 확인 및 피드백")
+    st.caption(
+        "일람 탭에서 잘못 분류된 기사의 **분류결과** 셀을 클릭해 수정한 뒤 "
+        "**피드백 저장**을 누르면 다음 실행부터 AI 분류에 반영됩니다."
+    )
+
+    classified_data = st.session_state.classified
+    cats = st.session_state.categories_state
+
+    # DataFrame 생성
+    rows = []
+    for i, a in enumerate(classified_data):
+        pub_dt = a.get("published_at")
+        date_str = pub_dt.strftime("%Y-%m-%d %H:%M") if isinstance(pub_dt, datetime) else ""
+        rows.append({
+            "No.": i + 1,
+            "키워드": a.get("keyword", ""),
+            "날짜/시간": date_str,
+            "검색엔진": a.get("search_engine", ""),
+            "언론사": a.get("source", ""),
+            "기사제목": a.get("title", ""),
+            "링크": a.get("link", ""),
+            "분류결과": a.get("category", ""),
+            "분류이유(AI)": a.get("reason", ""),
+        })
+
+    df_all = pd.DataFrame(rows)
+    cat_options = list(cats.keys()) + ["보류"]
+
+    col_config = {
+        "No.": st.column_config.NumberColumn(disabled=True, width="small"),
+        "키워드": st.column_config.TextColumn(disabled=True),
+        "날짜/시간": st.column_config.TextColumn(disabled=True),
+        "검색엔진": st.column_config.TextColumn(disabled=True, width="small"),
+        "언론사": st.column_config.TextColumn(disabled=True),
+        "기사제목": st.column_config.TextColumn(disabled=True),
+        "링크": st.column_config.LinkColumn(disabled=True),
+        "분류결과": st.column_config.SelectboxColumn(
+            options=cat_options,
+            required=True,
+        ),
+        "분류이유(AI)": st.column_config.TextColumn(disabled=True),
+    }
+
+    tab_names = ["일람"] + list(cats.keys()) + ["보류"]
+    tabs = st.tabs(tab_names)
+
+    # 일람 탭: 편집 가능
+    with tabs[0]:
+        edited_df = st.data_editor(
+            df_all,
+            column_config=col_config,
+            hide_index=True,
+            use_container_width=True,
+            key=f"feedback_editor_{st.session_state.run_id}",
+        )
+        if st.button("💾 피드백 저장", type="secondary"):
+            changes = [
+                {"title": classified_data[i]["title"], "category": edited}
+                for i, (orig, edited) in enumerate(
+                    zip(df_all["분류결과"], edited_df["분류결과"])
+                )
+                if orig != edited
+            ]
+            if changes:
+                if save_feedback(changes):
+                    st.success(f"✅ {len(changes)}건 피드백 저장 완료! 다음 실행부터 반영됩니다.")
+            else:
+                st.info("변경된 분류가 없습니다.")
+
+    # 카테고리별 탭: 읽기 전용
+    for i, cat in enumerate(cats.keys()):
+        with tabs[i + 1]:
+            cat_df = df_all[df_all["분류결과"] == cat].reset_index(drop=True)
+            if cat_df.empty:
+                st.caption("해당 카테고리로 분류된 기사가 없습니다.")
+            else:
+                st.dataframe(cat_df, hide_index=True, use_container_width=True,
+                             column_config=col_config)
+
+    # 보류 탭: 읽기 전용
+    with tabs[-1]:
+        unc_df = df_all[df_all["분류결과"] == "보류"].reset_index(drop=True)
+        if unc_df.empty:
+            st.caption("보류로 분류된 기사가 없습니다.")
+        else:
+            st.dataframe(unc_df, hide_index=True, use_container_width=True,
+                         column_config=col_config)

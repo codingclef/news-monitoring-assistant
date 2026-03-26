@@ -14,13 +14,14 @@ def classify_articles(
     categories: dict,
     client: OpenAI,
     progress_callback: Callable[[int, int], None] | None = None,
+    feedback_examples: list[dict] | None = None,
 ) -> list[dict]:
     """
     GPT-4o-mini로 각 기사를 분류합니다.
 
     분류 규칙:
-    - docx에 정의된 카테고리 중 가장 적합한 1개 부여
-    - 어디에도 명확히 해당하지 않으면 '미분류'로 처리
+    - 정의된 카테고리 중 가장 적합한 1개 부여
+    - 어디에도 명확히 해당하지 않으면 '보류'로 처리
     - '일람' 시트는 별도 시스템 기본 시트이므로 여기서는 다루지 않음
     """
     if not articles:
@@ -32,6 +33,14 @@ def classify_articles(
     categories_desc = "\n".join(
         f"- {name}: {desc}" for name, desc in categories.items()
     )
+
+    # 피드백 예시 텍스트 (루프 바깥에서 한 번만 생성)
+    examples_block = ""
+    if feedback_examples:
+        lines = ["[참고 분류 예시 - 이전 피드백 기반]"]
+        for ex in feedback_examples[:20]:
+            lines.append(f'- 제목: "{ex["title"]}" → {ex["category"]}')
+        examples_block = "\n".join(lines) + "\n\n"
 
     for i, article in enumerate(articles):
         if progress_callback:
@@ -63,10 +72,10 @@ def classify_articles(
 기사 제목: {article['title']}
 기사 내용 요약: {article['description']}
 
-분류 기준:
+{examples_block}분류 기준:
 {categories_desc}
 
-선택 가능한 카테고리: {', '.join(classifiable)}, 미분류
+선택 가능한 카테고리: {', '.join(classifiable)}, 보류
 
 반드시 아래 JSON 형식으로만 응답하세요:
 {{
@@ -74,8 +83,8 @@ def classify_articles(
     "reason": "분류 이유를 1~2문장으로 설명"
 }}
 
-- category는 위 목록 중 하나 또는 '미분류'여야 합니다.
-- 어느 기준에도 명확히 해당하지 않거나 판단이 어려우면 반드시 '미분류'로 응답하세요.""",
+- category는 위 목록 중 하나 또는 '보류'여야 합니다.
+- 어느 기준에도 명확히 해당하지 않거나 판단이 어려우면 반드시 '보류'로 응답하세요.""",
                     },
                 ],
                 response_format={"type": "json_object"},
