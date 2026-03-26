@@ -391,6 +391,12 @@ if monitoring_clicked:
                 if a["keyword"] not in existing_kws:
                     existing["keyword"] = existing["keyword"] + ", " + a["keyword"]
 
+        # 검색엔진별, 날짜/시간 오름차순 정렬
+        unique_articles.sort(key=lambda a: (
+            a.get("search_engine", ""),
+            a.get("published_at") or datetime.min,
+        ))
+
         _log(S["log_collected"].format(count=len(unique_articles)))
 
         if not unique_articles:
