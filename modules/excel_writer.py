@@ -9,8 +9,8 @@ from openpyxl.utils import get_column_letter
 
 from modules.i18n import get_strings
 
-COL_WIDTHS_ILAM  = [6, 15, 20, 10, 15, 55, 45, 20]
-COL_WIDTHS_OTHER = [6, 15, 20, 10, 15, 55, 45, 45]
+COL_WIDTHS_ILAM  = [4, 15, 20, 10, 15, 55, 45, 20]
+COL_WIDTHS_OTHER = [4, 15, 20, 10, 15, 55, 45, 45]
 
 HEADER_BG = "4472C4"
 HEADER_FG = "FFFFFF"

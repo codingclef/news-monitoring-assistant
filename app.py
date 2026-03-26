@@ -544,7 +544,7 @@ if st.session_state.classified is not None:
     cat_options = list(cats.keys()) + ["보류", "해당없음"]
 
     col_config = {
-        S["col_no"]: st.column_config.NumberColumn(disabled=True, width="small"),
+        S["col_no"]: st.column_config.NumberColumn(disabled=True, width=55),
         S["col_keyword"]: st.column_config.TextColumn(disabled=True),
         S["col_datetime"]: st.column_config.TextColumn(disabled=True),
         S["col_engine"]: st.column_config.TextColumn(disabled=True, width="small"),
