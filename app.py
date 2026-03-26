@@ -172,23 +172,34 @@ with col_left:
     h2.markdown("**분류 조건**")
 
     # 분류 기준 행 목록
-    for cat_id in list(st.session_state.cat_ids):
+    _name_placeholders = [
+        "예: 부정기사",
+        "예: 중요기사",
+    ]
+    _cond_placeholders = [
+        "예: 회사에 대한 직접적인 비판 기사(운영 미숙이나 주요 사업의 실효성 문제점 등 비판)라고 판단되는 경우",
+        "예: 임원 인터뷰 기사 등 중요한 기사라고 판단되는 경우",
+    ]
+
+    for row_idx, cat_id in enumerate(list(st.session_state.cat_ids)):
         c1, c2, c3 = st.columns([2, 5, 1])
         with c1:
             st.text_input(
                 "시트명",
                 key=f"cat_name_{cat_id}",
-                placeholder="예: 부정적",
+                placeholder=_name_placeholders[min(row_idx, len(_name_placeholders) - 1)],
                 label_visibility="collapsed",
             )
         with c2:
-            st.text_input(
+            st.text_area(
                 "분류 조건",
                 key=f"cat_cond_{cat_id}",
-                placeholder="예: 키워드에 대해 부정적 내용이 있는 경우",
+                placeholder=_cond_placeholders[min(row_idx, len(_cond_placeholders) - 1)],
                 label_visibility="collapsed",
+                height=100,
             )
         with c3:
+            st.write("")
             st.write("")
             if st.button("✕", key=f"del_{cat_id}", help="삭제"):
                 st.session_state.cat_ids.remove(cat_id)
