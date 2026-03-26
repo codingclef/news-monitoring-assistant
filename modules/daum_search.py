@@ -63,7 +63,7 @@ def search_daum_news(
 
             found = 0
             for item in news_items:
-                article = _parse_item(item, keyword, start_dt, end_dt)
+                article = _parse_item(item, keyword)
                 if article:
                     articles.append(article)
                     found += 1
@@ -81,12 +81,7 @@ def search_daum_news(
     return articles
 
 
-def _parse_item(
-    item,
-    keyword: str,
-    start_dt: datetime,
-    end_dt: datetime,
-) -> dict | None:
+def _parse_item(item, keyword: str) -> dict | None:
     """BeautifulSoup 아이템에서 기사 정보를 파싱합니다."""
     try:
         # 제목 & 링크
@@ -104,16 +99,10 @@ def _parse_item(
         source_el = item.select_one("strong.tit_item span.txt_info")
         source = source_el.get_text(strip=True) if source_el else ""
 
-        # 날짜
+        # 날짜 (Daum 서버가 sd/ed로 이미 필터링하므로 클라이언트 범위 체크 불필요)
         date_el = item.select_one("span.gem-subinfo span.txt_info")
         date_str = date_el.get_text(strip=True) if date_el else ""
         pub_dt = _parse_date(date_str)
-
-        if pub_dt is None:
-            return None
-
-        if not (start_dt <= pub_dt <= end_dt):
-            return None
 
         # 요약
         desc_el = item.select_one("p.conts-desc")
