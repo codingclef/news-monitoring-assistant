@@ -1,0 +1,213 @@
+from __future__ import annotations
+
+KO: dict[str, str] = {
+    # 페이지
+    "page_title": "뉴스 모니터링 어시스턴트",
+    "title": "📰 뉴스 모니터링 어시스턴트",
+    # 프리셋
+    "section_preset": "① 프리셋",
+    "preset_load": "불러오기",
+    "preset_delete": "삭제",
+    "preset_save": "저장",
+    "preset_name_placeholder": "예: 장애인고용공단_평일",
+    "preset_none": "저장된 프리셋이 없습니다.",
+    "preset_save_success": "'{name}' 저장 완료!",
+    "preset_err_name": "프리셋 이름을 입력해주세요.",
+    "preset_err_keyword": "키워드를 입력한 후 저장해주세요.",
+    "preset_err_categories": "분류 기준을 1개 이상 입력한 후 저장해주세요.",
+    # 키워드
+    "section_keywords": "② 키워드",
+    "keywords_label": "모니터링할 키워드를 쉼표(,)로 구분하여 입력하세요",
+    "keywords_placeholder": "예: 삼성전자, 이재용, 갤럭시",
+    "keywords_err": "키워드를 입력해주세요.",
+    # 분류 기준
+    "section_categories": "③ 분류 기준",
+    "categories_caption": "시트명과 해당 시트에 넣을 기사의 조건을 입력하세요.",
+    "categories_tip": "💡 일람 (수집된 모든 기사)과 보류 (AI가 분류하지 못한 기사) 시트는 입력 여부와 관계없이 항상 자동으로 생성됩니다.",
+    "col_sheet_name": "**시트명**",
+    "col_condition": "**분류 조건**",
+    "sheet_name_ph_0": "예: 부정기사",
+    "sheet_name_ph_1": "예: 중요기사",
+    "cond_ph_0": "예: 회사에 대한 직접적인 비판 기사(운영 미숙이나 주요 사업의 실효성 문제점 등 비판)라고 판단되는 경우",
+    "cond_ph_1": "예: 임원 인터뷰 기사 등 중요한 기사라고 판단되는 경우",
+    "add_sheet": "＋ 시트 추가",
+    "categories_err": "시트명을 1개 이상 입력해주세요.",
+    # 모니터링 설정
+    "section_settings": "④ 모니터링 설정",
+    "date_label": "날짜",
+    "start_time_label": "시작 시간",
+    "end_time_label": "종료 시간",
+    "time_help": (
+        "⏱ 언론사 기사가 검색엔진에 노출되기까지 수 분~수십 분 지연이 발생할 수 있습니다.\n\n"
+        "예) 9시부터 모니터링하려면 시작 시간을 08:50으로 설정하는 것을 권장합니다."
+    ),
+    "search_engine_label": "**검색 엔진**",
+    "naver_checkbox": "네이버 뉴스",
+    "daum_checkbox": "다음 뉴스",
+    "engines_err": "검색 엔진을 최소 1개 이상 선택해주세요.",
+    "password_label": "비밀번호",
+    "password_placeholder": "비밀번호를 입력하세요",
+    "password_err": "비밀번호가 일치하지 않습니다.",
+    "time_range_err": "시작 시간이 종료 시간보다 앞이어야 합니다.",
+    "start_button": "🔍 모니터링 시작",
+    # 진행
+    "status_collecting": "🔎 기사 수집 중...",
+    "status_classifying": "🤖 AI 분류 중...",
+    "status_excel": "📊 엑셀 파일 생성 중...",
+    "log_excel": "엑셀 생성 중...",
+    "status_done": "✅ 완료! 총 {count}건 처리",
+    "log_collecting": "수집 중: [{keyword}] ({i}/{total})",
+    "log_collected": "수집 완료: 총 {count}건 (중복 제거 후)",
+    "log_classifying": "분류 중: {current}/{total}건",
+    "warn_no_articles": "수집된 기사가 없습니다. 검색 조건을 확인해주세요.",
+    "warn_naver_fail": "네이버 [{keyword}] 수집 실패: {e}",
+    "warn_daum_fail": "다음 [{keyword}] 수집 실패: {e}",
+    "err_classify": "분류 중 오류 발생: {e}",
+    "err_excel": "엑셀 생성 실패: {e}",
+    "missing_config": "설정 누락: {keys} — 관리자에게 문의하세요.",
+    # 결과
+    "section_results": "📊 분류 결과 요약",
+    "count_unit": "건",
+    "download_button": "📥 엑셀 다운로드",
+    "filename_prefix": "뉴스모니터링",
+    # 피드백
+    "section_feedback": "💬 분류 결과 확인 및 피드백",
+    "feedback_caption": (
+        "일람 탭에서 잘못 분류된 기사의 **분류결과** 셀을 클릭해 수정한 뒤 "
+        "**피드백 저장**을 누르면 다음 실행부터 AI 분류에 반영됩니다."
+    ),
+    "feedback_save_button": "💾 피드백 저장",
+    "feedback_save_success": "✅ {count}건 피드백 저장 완료! 다음 실행부터 반영됩니다.",
+    "feedback_no_changes": "변경된 분류가 없습니다.",
+    "no_articles_in_cat": "해당 카테고리로 분류된 기사가 없습니다.",
+    "no_articles_holdup": "보류로 분류된 기사가 없습니다.",
+    # 미리보기
+    "preview_expander": "📋 엑셀 출력 형식 미리보기",
+    "preview_ilam": "**일람 시트** (수집된 모든 기사)",
+    "preview_other": "**그 외 시트** (각 분류 기준 / 보류)",
+    # 엑셀 컬럼명
+    "col_no": "No.",
+    "col_keyword": "키워드",
+    "col_datetime": "날짜/시간",
+    "col_engine": "검색엔진",
+    "col_media": "언론사",
+    "col_title": "기사제목",
+    "col_link": "링크",
+    "col_category": "분류결과",
+    "col_reason": "분류이유",
+    "col_reason_ai": "분류이유(AI)",
+    # 시트명 / 탭명
+    "sheet_ilam": "일람",
+    "sheet_holdup": "보류",
+    # 검색엔진 표시값
+    "engine_naver": "네이버",
+    "engine_daum": "다음",
+}
+
+JA: dict[str, str] = {
+    # ページ
+    "page_title": "ニュースモニタリングアシスタント",
+    "title": "📰 ニュースモニタリングアシスタント",
+    # プリセット
+    "section_preset": "① プリセット",
+    "preset_load": "読み込む",
+    "preset_delete": "削除",
+    "preset_save": "保存",
+    "preset_name_placeholder": "例: 障害者雇用促進_平日",
+    "preset_none": "保存済みプリセットはありません。",
+    "preset_save_success": "'{name}' 保存完了！",
+    "preset_err_name": "プリセット名を入力してください。",
+    "preset_err_keyword": "キーワードを入力してから保存してください。",
+    "preset_err_categories": "分類基準を1つ以上入力してから保存してください。",
+    # キーワード
+    "section_keywords": "② キーワード",
+    "keywords_label": "モニタリングするキーワードをカンマ(,)で区切って入力してください",
+    "keywords_placeholder": "例: 삼성전자, 이재용, 갤럭시",
+    "keywords_err": "キーワードを入力してください。",
+    # 分類基準
+    "section_categories": "③ 分類基準",
+    "categories_caption": "シート名と該当シートに入れる記事の条件を入力してください。",
+    "categories_tip": "💡 一覧（収集した全記事）と保留（AIが分類できなかった記事）シートは、入力に関わらず常に自動生成されます。",
+    "col_sheet_name": "**シート名**",
+    "col_condition": "**分類条件**",
+    "sheet_name_ph_0": "例: 否定記事",
+    "sheet_name_ph_1": "例: 重要記事",
+    "cond_ph_0": "例: 会社に対する直接的な批判記事（運営上の問題や主要事業の実効性への批判など）と判断される場合",
+    "cond_ph_1": "例: 役員インタビュー記事など重要な記事と判断される場合",
+    "add_sheet": "＋ シート追加",
+    "categories_err": "シート名を1つ以上入力してください。",
+    # モニタリング設定
+    "section_settings": "④ モニタリング設定",
+    "date_label": "日付",
+    "start_time_label": "開始時間",
+    "end_time_label": "終了時間",
+    "time_help": (
+        "⏱ 記事が検索エンジンに表示されるまで数分〜数十分の遅延が発生する場合があります。\n\n"
+        "例）9時からモニタリングする場合は、開始時間を08:50に設定することをお勧めします。"
+    ),
+    "search_engine_label": "**検索エンジン**",
+    "naver_checkbox": "NAVERニュース",
+    "daum_checkbox": "Daumニュース",
+    "engines_err": "検索エンジンを1つ以上選択してください。",
+    "password_label": "パスワード",
+    "password_placeholder": "パスワードを入力してください",
+    "password_err": "パスワードが一致しません。",
+    "time_range_err": "開始時間は終了時間より前である必要があります。",
+    "start_button": "🔍 モニタリング開始",
+    # 進行
+    "status_collecting": "🔎 記事収集中...",
+    "status_classifying": "🤖 AI分類中...",
+    "status_excel": "📊 Excelファイル生成中...",
+    "log_excel": "Excel生成中...",
+    "status_done": "✅ 完了！合計{count}件処理",
+    "log_collecting": "収集中: [{keyword}] ({i}/{total})",
+    "log_collected": "収集完了: 合計{count}件（重複除去後）",
+    "log_classifying": "分類中: {current}/{total}件",
+    "warn_no_articles": "収集された記事がありません。検索条件を確認してください。",
+    "warn_naver_fail": "NAVER [{keyword}] 収集失敗: {e}",
+    "warn_daum_fail": "Daum [{keyword}] 収集失敗: {e}",
+    "err_classify": "分類中にエラーが発生しました: {e}",
+    "err_excel": "Excel生成失敗: {e}",
+    "missing_config": "設定不足: {keys} — 管理者にお問い合わせください。",
+    # 結果
+    "section_results": "📊 分類結果サマリー",
+    "count_unit": "件",
+    "download_button": "📥 Excelダウンロード",
+    "filename_prefix": "ニュースモニタリング",
+    # フィードバック
+    "section_feedback": "💬 分類結果確認・フィードバック",
+    "feedback_caption": (
+        "一覧タブで誤分類された記事の**分類結果**セルをクリックして修正し、"
+        "**フィードバック保存**を押すと次回実行から反映されます。"
+    ),
+    "feedback_save_button": "💾 フィードバック保存",
+    "feedback_save_success": "✅ {count}件のフィードバックを保存しました！次回実行から反映されます。",
+    "feedback_no_changes": "変更された分類がありません。",
+    "no_articles_in_cat": "このカテゴリに分類された記事はありません。",
+    "no_articles_holdup": "保留に分類された記事はありません。",
+    # プレビュー
+    "preview_expander": "📋 Excel出力フォーマットプレビュー",
+    "preview_ilam": "**一覧シート**（収集した全記事）",
+    "preview_other": "**その他シート**（各分類基準 / 保留）",
+    # Excelカラム名
+    "col_no": "No.",
+    "col_keyword": "キーワード",
+    "col_datetime": "日付/時間",
+    "col_engine": "検索エンジン",
+    "col_media": "メディア",
+    "col_title": "記事タイトル",
+    "col_link": "リンク",
+    "col_category": "分類結果",
+    "col_reason": "分類理由",
+    "col_reason_ai": "分類理由(AI)",
+    # シート名 / タブ名
+    "sheet_ilam": "一覧",
+    "sheet_holdup": "保留",
+    # 検索エンジン表示値
+    "engine_naver": "NAVER",
+    "engine_daum": "Daum",
+}
+
+
+def get_strings(lang: str) -> dict[str, str]:
+    return JA if lang == "ja" else KO
