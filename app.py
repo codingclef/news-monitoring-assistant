@@ -117,7 +117,7 @@ with col_left:
         with col_load:
             if st.button(S["preset_load"], use_container_width=True):
                 p = presets[selected_preset]
-                st.session_state["preset_keywords"] = p["keywords"]
+                st.session_state["keywords_input"] = p["keywords"]
                 st.session_state["preset_name_input"] = selected_preset
                 st.session_state.renaming_preset = False
                 new_ids = list(range(len(p["categories"])))
@@ -205,7 +205,6 @@ with col_left:
     st.subheader(S["section_keywords"])
     keywords_raw = st.text_area(
         S["keywords_label"],
-        value=st.session_state.get("preset_keywords", ""),
         placeholder=S["keywords_placeholder"],
         height=80,
         label_visibility="collapsed",
