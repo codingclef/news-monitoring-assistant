@@ -9,6 +9,7 @@ from modules.classifier import classify_articles
 from modules.daum_search import search_daum_news
 from modules.excel_writer import create_excel
 from modules.naver_search import search_naver_news
+from modules.sheets import load_presets, save_preset, delete_preset
 
 
 def _secret(key: str) -> str:
@@ -70,13 +71,72 @@ col_left, col_right = st.columns([3, 2], gap="large")
 # ── 좌측: 키워드 & 분류 기준 입력 ──────────────
 with col_left:
 
+    # 프리셋
+    st.subheader("① 프리셋")
+    presets = load_presets()
+
+    if presets:
+        col_sel, col_load, col_del = st.columns([4, 1, 1])
+        with col_sel:
+            selected_preset = st.selectbox(
+                "저장된 프리셋",
+                options=list(presets.keys()),
+                label_visibility="collapsed",
+            )
+        with col_load:
+            if st.button("불러오기", use_container_width=True):
+                p = presets[selected_preset]
+                st.session_state["preset_keywords"] = p["keywords"]
+                # 분류기준 행 초기화 후 재구성
+                new_ids = list(range(len(p["categories"])))
+                st.session_state.cat_ids = new_ids
+                st.session_state.cat_counter = len(new_ids)
+                for i, (name, cond) in enumerate(p["categories"].items()):
+                    st.session_state[f"cat_name_{i}"] = name
+                    st.session_state[f"cat_cond_{i}"] = cond
+                st.rerun()
+        with col_del:
+            if st.button("삭제", use_container_width=True):
+                delete_preset(selected_preset)
+                st.rerun()
+    else:
+        st.caption("저장된 프리셋이 없습니다.")
+
+    # 프리셋 저장
+    col_name, col_save = st.columns([4, 1])
+    with col_name:
+        preset_name = st.text_input(
+            "프리셋 이름",
+            placeholder="예: 장애인고용공단_평일",
+            label_visibility="collapsed",
+        )
+    with col_save:
+        if st.button("저장", use_container_width=True):
+            if not preset_name.strip():
+                st.error("프리셋 이름을 입력해주세요.")
+            else:
+                kw = st.session_state.get("keywords_input", "")
+                cats = {}
+                for cid in st.session_state.cat_ids:
+                    n = st.session_state.get(f"cat_name_{cid}", "").strip()
+                    c = st.session_state.get(f"cat_cond_{cid}", "").strip()
+                    if n:
+                        cats[n] = c
+                if save_preset(preset_name.strip(), kw, cats):
+                    st.success(f"'{preset_name}' 저장 완료!")
+                    st.rerun()
+
+    st.divider()
+
     # 키워드
-    st.subheader("① 키워드")
+    st.subheader("② 키워드")
     keywords_raw = st.text_area(
         "모니터링할 키워드를 쉼표(,)로 구분하여 입력하세요",
+        value=st.session_state.get("preset_keywords", ""),
         placeholder="예: 삼성전자, 이재용, 갤럭시",
         height=80,
         label_visibility="collapsed",
+        key="keywords_input",
     )
     if "keywords" in st.session_state.val_errors:
         st.error("키워드를 입력해주세요.")
@@ -84,7 +144,7 @@ with col_left:
     st.divider()
 
     # 분류 기준
-    st.subheader("② 분류 기준")
+    st.subheader("③ 분류 기준")
     st.caption("시트명과 해당 시트에 넣을 기사의 조건을 입력하세요.")
     st.caption("💡 일람 (수집된 모든 기사)과 보류 (AI가 분류하지 못한 기사) 시트는 입력 여부와 관계없이 항상 자동으로 생성됩니다.")
 
@@ -127,7 +187,7 @@ with col_left:
 
 # ── 우측: 모니터링 설정 ────────────────────────
 with col_right:
-    st.subheader("③ 모니터링 설정")
+    st.subheader("④ 모니터링 설정")
 
     search_date = st.date_input("날짜", value=date.today())
 
