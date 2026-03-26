@@ -8,12 +8,12 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 # 일람 시트 전용 컬럼 (분류이유 없음, 분류결과 있음)
-COLUMNS_ILAM  = ["No.", "키워드", "날짜/시간", "언론사", "기사제목", "링크", "분류결과"]
-COL_WIDTHS_ILAM = [6, 15, 20, 15, 55, 45, 20]
+COLUMNS_ILAM  = ["No.", "키워드", "날짜/시간", "검색엔진", "언론사", "기사제목", "링크", "분류결과"]
+COL_WIDTHS_ILAM = [6, 15, 20, 10, 15, 55, 45, 20]
 
 # 그 외 시트 컬럼 (분류이유 있음)
-COLUMNS_OTHER = ["No.", "키워드", "날짜/시간", "언론사", "기사제목", "링크", "분류이유"]
-COL_WIDTHS_OTHER = [6, 15, 20, 15, 55, 45, 45]
+COLUMNS_OTHER = ["No.", "키워드", "날짜/시간", "검색엔진", "언론사", "기사제목", "링크", "분류이유"]
+COL_WIDTHS_OTHER = [6, 15, 20, 10, 15, 55, 45, 45]
 
 HEADER_BG = "4472C4"
 HEADER_FG = "FFFFFF"
@@ -96,6 +96,7 @@ def _add_row(ws, article: dict, row_num: int, is_ilam: bool) -> None:
         row_num,
         article.get("keyword", ""),
         date_str,
+        article.get("search_engine", ""),
         article.get("source", ""),
         article.get("title", ""),
         article.get("link", ""),
@@ -106,7 +107,7 @@ def _add_row(ws, article: dict, row_num: int, is_ilam: bool) -> None:
         cell = ws.cell(row=row, column=col, value=value)
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
-        if col == 6 and value:  # 링크 컬럼
+        if col == 7 and value:  # 링크 컬럼
             try:
                 cell.hyperlink = value
                 cell.font = Font(color="0563C1", underline="single")

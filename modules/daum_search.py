@@ -154,6 +154,7 @@ def _parse_item(
             "title": title,
             "link": link,
             "published_at": pub_dt,
+            "search_engine": "다음",
             "source": source,
             "description": description,
             "category": "",

@@ -81,6 +81,7 @@ def search_naver_news(
                         "title": _clean_html(item.get("title", "")),
                         "link": link,
                         "published_at": pub_dt,
+                        "search_engine": "네이버",
                         "source": _extract_source(link),
                         "description": _clean_html(item.get("description", "")),
                         "category": "",
