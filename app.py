@@ -331,96 +331,108 @@ if monitoring_clicked:
     progress_bar = st.progress(0)
     log_box = st.empty()
 
+    _monitoring_start = datetime.now()
+
+    def _elapsed_str() -> str:
+        secs = int((datetime.now() - _monitoring_start).total_seconds())
+        m, s = divmod(secs, 60)
+        return f"{m:02d}:{s:02d}"
+
+    def _log(msg: str) -> None:
+        log_box.caption(f"{msg}　　{S['elapsed_label']} {_elapsed_str()}")
+
     all_articles = []
     total_steps = len(keywords)
 
-    # ── STEP 1: 기사 수집 ──
-    status_box.info(S["status_collecting"])
-    for i, keyword in enumerate(keywords):
-        log_box.caption(S["log_collecting"].format(keyword=keyword, i=i + 1, total=total_steps))
+    with st.spinner(S["spinner_text"]):
 
-        if use_naver:
-            try:
-                naver_articles = search_naver_news(
-                    keyword, start_dt, end_dt, naver_client_id, naver_client_secret
-                )
-                all_articles.extend(naver_articles)
-            except Exception as e:
-                st.warning(S["warn_naver_fail"].format(keyword=keyword, e=e))
+        # ── STEP 1: 기사 수집 ──
+        status_box.info(S["status_collecting"])
+        for i, keyword in enumerate(keywords):
+            _log(S["log_collecting"].format(keyword=keyword, i=i + 1, total=total_steps))
 
-        if use_daum:
-            try:
-                daum_articles = search_daum_news(keyword, start_dt, end_dt)
-                all_articles.extend(daum_articles)
-            except Exception as e:
-                st.warning(S["warn_daum_fail"].format(keyword=keyword, e=e))
+            if use_naver:
+                try:
+                    naver_articles = search_naver_news(
+                        keyword, start_dt, end_dt, naver_client_id, naver_client_secret
+                    )
+                    all_articles.extend(naver_articles)
+                except Exception as e:
+                    st.warning(S["warn_naver_fail"].format(keyword=keyword, e=e))
 
-        progress_bar.progress((i + 1) / total_steps * 0.4)
+            if use_daum:
+                try:
+                    daum_articles = search_daum_news(keyword, start_dt, end_dt)
+                    all_articles.extend(daum_articles)
+                except Exception as e:
+                    st.warning(S["warn_daum_fail"].format(keyword=keyword, e=e))
 
-    # ── 중복 제거 (URL 기준) + 키워드 병합 ──
-    seen = {}  # link -> unique_articles 인덱스
-    unique_articles = []
-    for a in all_articles:
-        link = a["link"]
-        if link not in seen:
-            seen[link] = len(unique_articles)
-            unique_articles.append(a)
-        else:
-            # 이미 있는 기사에 키워드 추가 (중복 제외)
-            existing = unique_articles[seen[link]]
-            existing_kws = [k.strip() for k in existing["keyword"].split(",")]
-            if a["keyword"] not in existing_kws:
-                existing["keyword"] = existing["keyword"] + ", " + a["keyword"]
+            progress_bar.progress((i + 1) / total_steps * 0.4)
 
-    log_box.caption(S["log_collected"].format(count=len(unique_articles)))
+        # ── 중복 제거 (URL 기준) + 키워드 병합 ──
+        seen = {}  # link -> unique_articles 인덱스
+        unique_articles = []
+        for a in all_articles:
+            link = a["link"]
+            if link not in seen:
+                seen[link] = len(unique_articles)
+                unique_articles.append(a)
+            else:
+                # 이미 있는 기사에 키워드 추가 (중복 제외)
+                existing = unique_articles[seen[link]]
+                existing_kws = [k.strip() for k in existing["keyword"].split(",")]
+                if a["keyword"] not in existing_kws:
+                    existing["keyword"] = existing["keyword"] + ", " + a["keyword"]
 
-    if not unique_articles:
-        status_box.warning(S["warn_no_articles"])
-        progress_bar.empty()
-        log_box.empty()
-        st.stop()
+        _log(S["log_collected"].format(count=len(unique_articles)))
 
-    # 일본어 모드일 때 검색엔진 표시값 변환
-    if lang == "ja":
-        eng_map = {"네이버": S["engine_naver"], "다음": S["engine_daum"]}
-        for a in unique_articles:
-            a["search_engine"] = eng_map.get(a["search_engine"], a["search_engine"])
+        if not unique_articles:
+            status_box.warning(S["warn_no_articles"])
+            progress_bar.empty()
+            log_box.empty()
+            st.stop()
 
-    # ── STEP 2: GPT 분류 ──
-    status_box.info(S["status_classifying"])
-    client = OpenAI(api_key=openai_key)
-    feedback_examples = load_feedback()
+        # 일본어 모드일 때 검색엔진 표시값 변환
+        if lang == "ja":
+            eng_map = {"네이버": S["engine_naver"], "다음": S["engine_daum"]}
+            for a in unique_articles:
+                a["search_engine"] = eng_map.get(a["search_engine"], a["search_engine"])
 
-    def on_progress(current: int, total: int):
-        log_box.caption(S["log_classifying"].format(current=current, total=total))
-        progress_bar.progress(0.4 + (current / total) * 0.5 if total > 0 else 0.4)
+        # ── STEP 2: GPT 분류 ──
+        status_box.info(S["status_classifying"])
+        client = OpenAI(api_key=openai_key)
+        feedback_examples = load_feedback()
 
-    try:
-        classified = classify_articles(
-            unique_articles,
-            categories,
-            client,
-            progress_callback=on_progress,
-            feedback_examples=feedback_examples,
-        )
-    except Exception as e:
-        st.error(S["err_classify"].format(e=e))
-        st.stop()
+        def on_progress(current: int, total: int):
+            _log(S["log_classifying"].format(current=current, total=total))
+            progress_bar.progress(0.4 + (current / total) * 0.5 if total > 0 else 0.4)
 
-    # ── STEP 3: 엑셀 생성 ──
-    status_box.info(S["status_excel"])
-    log_box.caption(S["log_excel"])
+        try:
+            classified = classify_articles(
+                unique_articles,
+                categories,
+                client,
+                progress_callback=on_progress,
+                feedback_examples=feedback_examples,
+            )
+        except Exception as e:
+            st.error(S["err_classify"].format(e=e))
+            st.stop()
 
-    try:
-        excel_bytes = create_excel(classified, list(categories.keys()), lang=lang)
-        st.session_state.excel_bytes = excel_bytes
-    except Exception as e:
-        st.error(S["err_excel"].format(e=e))
-        st.stop()
+        # ── STEP 3: 엑셀 생성 ──
+        status_box.info(S["status_excel"])
+        _log(S["log_excel"])
+
+        try:
+            excel_bytes = create_excel(classified, list(categories.keys()), lang=lang)
+            st.session_state.excel_bytes = excel_bytes
+        except Exception as e:
+            st.error(S["err_excel"].format(e=e))
+            st.stop()
 
     # ── 완료 ──
     progress_bar.progress(1.0)
-    status_box.success(S["status_done"].format(count=len(unique_articles)))
+    status_box.success(S["status_done"].format(count=len(unique_articles), elapsed=_elapsed_str()))
     log_box.empty()
 
     # 결과 세션 저장
