@@ -112,16 +112,21 @@ with col_left:
         )
     with col_save:
         if st.button("저장", use_container_width=True):
+            kw = st.session_state.get("keywords_input", "").strip()
+            cats = {}
+            for cid in st.session_state.cat_ids:
+                n = st.session_state.get(f"cat_name_{cid}", "").strip()
+                c = st.session_state.get(f"cat_cond_{cid}", "").strip()
+                if n:
+                    cats[n] = c
+
             if not preset_name.strip():
                 st.error("프리셋 이름을 입력해주세요.")
+            elif not kw:
+                st.error("키워드를 입력한 후 저장해주세요.")
+            elif not cats:
+                st.error("분류 기준을 1개 이상 입력한 후 저장해주세요.")
             else:
-                kw = st.session_state.get("keywords_input", "")
-                cats = {}
-                for cid in st.session_state.cat_ids:
-                    n = st.session_state.get(f"cat_name_{cid}", "").strip()
-                    c = st.session_state.get(f"cat_cond_{cid}", "").strip()
-                    if n:
-                        cats[n] = c
                 if save_preset(preset_name.strip(), kw, cats):
                     st.success(f"'{preset_name}' 저장 완료!")
                     st.rerun()
