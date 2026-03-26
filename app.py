@@ -561,27 +561,21 @@ if st.session_state.classified is not None:
     tab_names = [S["sheet_ilam"]] + list(cats.keys()) + [S["sheet_holdup"], S["sheet_na"]]
     tabs = st.tabs(tab_names)
 
+    # 일람 탭용 col_config (분류이유 제외, 분류결과도 읽기전용)
+    col_config_ilam = {
+        k: (st.column_config.TextColumn(disabled=True) if k == S["col_category"] else v)
+        for k, v in col_config.items()
+        if k != S["col_reason_ai"]
+    }
+    df_ilam = df_all.drop(columns=[S["col_reason_ai"]])
+
     with tabs[0]:
-        edited_df = st.data_editor(
-            df_all,
-            column_config=col_config,
+        st.dataframe(
+            df_ilam,
+            column_config=col_config_ilam,
             hide_index=True,
             use_container_width=True,
-            key=f"feedback_editor_{st.session_state.run_id}",
         )
-        if st.button(S["feedback_save_button"], type="secondary"):
-            changes = [
-                {"title": classified_data[i]["title"], "category": edited}
-                for i, (orig, edited) in enumerate(
-                    zip(df_all[S["col_category"]], edited_df[S["col_category"]])
-                )
-                if orig != edited
-            ]
-            if changes:
-                if save_feedback(changes):
-                    st.success(S["feedback_save_success"].format(count=len(changes)))
-            else:
-                st.info(S["feedback_no_changes"])
 
     for i, cat in enumerate(cats.keys()):
         with tabs[i + 1]:
