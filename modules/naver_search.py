@@ -171,6 +171,13 @@ def _extract_source(url: str) -> str:
             "dt.co.kr": "디지털타임스",
             "zdnet.co.kr": "ZDNet Korea",
             "bloter.net": "블로터",
+            # 시사/주간지
+            "sisajournal.com": "시사저널",
+            "sisain.co.kr": "시사IN",
+            "weekly.khan.co.kr": "주간경향",
+            "hani.co.kr": "한겨레",
+            "womennews.co.kr": "여성신문",
+            "mediatoday.co.kr": "미디어오늘",
         }
         for k, v in known_sources.items():
             if k in domain:
