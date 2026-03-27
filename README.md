@@ -1,131 +1,131 @@
-# 📰 뉴스 모니터링 어시스턴트
+# 📰 News Monitoring Assistant
 
-**[한국어]** | [日本語](README.ja.md) | [English](README.en.md)
+[한국어](README.ko.md) | [日本語](README.ja.md) | **[English]**
 
-네이버·다음 뉴스를 수집하고, GPT AI가 기사를 자동 분류하여 엑셀로 출력하는 웹 애플리케이션입니다.
-Streamlit으로 구동되며, 한국어·일본어 UI를 지원합니다.
-
----
-
-## 주요 기능
-
-| 기능 | 설명 |
-|------|------|
-| 기사 수집 | 네이버 검색 API (키워드당 최대 1,000건), 다음 뉴스 스크래핑 (키워드당 최대 약 200~300건) |
-| AI 분류 | GPT-4o-mini가 사용자 정의 분류 기준에 따라 각 기사를 자동 분류 |
-| 엑셀 출력 | 일람 · 사용자 분류 시트 · 보류 · 해당없음 4종 구성의 .xlsx 파일 생성 |
-| 프리셋 | 키워드·분류 기준·시간·검색엔진 설정을 Google Sheets에 저장/불러오기 |
-| 피드백 | 분류 결과를 앱 내에서 직접 수정 → Google Sheets에 저장 → 다음 실행부터 AI에 반영 |
-| 다국어 | 한국어 / 일본어 전환 지원 |
+A web application that collects news from Naver and Daum, automatically classifies articles using GPT AI, and exports the results to Excel.
+Built with Streamlit and supports Korean and Japanese UI.
 
 ---
 
-## 처리 흐름
+## Features
 
-```
-사용자 입력
-(키워드 · 분류 기준 · 시간 범위 · 검색엔진)
-    │
-    ▼
-STEP 1. 기사 수집
-    네이버 API + 다음 스크래핑 → 전체 합산
-    → URL 중복 제거 (동일 기사는 키워드 병합)
-    → 검색엔진별 · 시간 오름차순 정렬
-    │
-    ▼
-STEP 2. AI 분류 (GPT-4o-mini)
-    이전 피드백을 few-shot 예시로 포함
-    기사별 분류 결과:
-      · 사용자 정의 카테고리 중 하나 (확신할 수 있는 경우)
-      · 보류 — 애매하거나 판단이 어려운 기사
-      · 해당없음 — 어떤 기준에도 명백히 해당하지 않는 기사
-    │
-    ▼
-STEP 3. 엑셀 생성
-    시트 구성:
-      1. 일람       (수집된 모든 기사)
-      2. 카테고리별 (사용자 정의 분류)
-      3. 보류       (애매한 기사)
-      4. 해당없음   (무관련 기사)
-    │
-    ▼
-결과 표시 & 피드백
-    앱 내 탭에서 분류결과 수정
-    → Google Sheets에 저장
-    → 다음 실행 시 AI 분류에 반영
-```
+| Feature | Description |
+|---------|-------------|
+| Article Collection | Naver Search API (up to 1,000 articles per keyword), Daum news scraping (approx. 200–300 articles per keyword) |
+| AI Classification | GPT-4o-mini automatically classifies each article according to user-defined criteria |
+| Excel Export | Generates a .xlsx file with 4 sheets: Overview, User-defined categories, Pending, and Not Applicable |
+| Presets | Save and load keyword, classification criteria, time range, and search engine settings to/from Google Sheets |
+| Feedback | Correct classifications directly in the app → saved to Google Sheets → reflected in AI on next run |
+| Multilingual | Korean / Japanese UI toggle |
 
 ---
 
-## 피드백 루프
-
-AI의 분류 정확도는 사용 할수록 향상됩니다.
+## Processing Flow
 
 ```
-모니터링 실행
+User Input
+(Keywords · Classification criteria · Time range · Search engine)
     │
     ▼
-결과 확인 (앱 내 분류 탭)
+STEP 1. Article Collection
+    Naver API + Daum Scraper → Merge all results
+    → Deduplicate by URL (same article: merge keywords)
+    → Sort by search engine, then datetime ascending
     │
     ▼
-잘못 분류된 기사 → 분류결과 셀에서 올바른 시트로 수정
+STEP 2. AI Classification (GPT-4o-mini)
+    Previous feedback included as few-shot examples
+    Per-article result:
+      · One of the user-defined categories (when confident)
+      · Pending        — ambiguous or hard-to-judge articles
+      · Not Applicable — articles clearly unrelated to any criteria
     │
     ▼
-[피드백 저장] 버튼 클릭
+STEP 3. Excel Generation
+    Sheet structure:
+      1. Overview       (all collected articles)
+      2. By Category    (user-defined classifications)
+      3. Pending        (ambiguous articles)
+      4. Not Applicable (unrelated articles)
     │
     ▼
-Google Sheets '피드백' 시트에 저장
-    │
-    ▼
-다음 실행 시 GPT 프롬프트에 few-shot 예시로 포함 → 정확도 향상
+Results & Feedback
+    Correct classifications in the in-app tabs
+    → Saved to Google Sheets
+    → Reflected in AI classification on next run
 ```
 
 ---
 
-## 프리셋
+## Feedback Loop
 
-자주 사용하는 검색 조건을 프리셋으로 저장해두면 매번 입력할 필요가 없습니다.
+Classification accuracy improves with each use.
 
-**저장 항목:** 키워드 · 분류 기준 (시트명 + 조건) · 시작/종료 시간 · 검색엔진 선택
-
-프리셋 데이터는 Google Sheets의 `프리셋` 시트에 저장됩니다.
+```
+Run monitoring
+    │
+    ▼
+Review results (classification tabs in app)
+    │
+    ▼
+Misclassified articles → correct the category in the cell
+    │
+    ▼
+Click [Save Feedback] button
+    │
+    ▼
+Saved to Google Sheets "피드백" sheet
+    │
+    ▼
+Included as few-shot examples in GPT prompt on next run → improved accuracy
+```
 
 ---
 
-## 모듈 구성
+## Presets
+
+Save frequently used search conditions as presets to avoid re-entering them each time.
+
+**Saved items:** Keywords · Classification criteria (sheet name + conditions) · Start/end time · Search engine selection
+
+Preset data is stored in the `프리셋` sheet of your Google Sheets.
+
+---
+
+## Module Structure
 
 ```
 search-assistant/
-├── app.py                  # Streamlit UI 및 전체 흐름 조율
+├── app.py                  # Streamlit UI and overall flow orchestration
 └── modules/
-    ├── i18n.py             # 한국어/일본어 문자열 사전
-    ├── naver_search.py     # 네이버 검색 API 연동
-    ├── daum_search.py      # 다음 뉴스 HTML 스크래핑
-    ├── classifier.py       # GPT-4o-mini 기사 분류
-    ├── excel_writer.py     # openpyxl 엑셀 파일 생성
-    ├── sheets.py           # Google Sheets 프리셋/피드백 관리
-    └── file_parser.py      # .docx 파일에서 키워드/분류 기준 추출 (GPT)
+    ├── i18n.py             # Korean/Japanese string dictionary
+    ├── naver_search.py     # Naver Search API integration
+    ├── daum_search.py      # Daum news HTML scraping
+    ├── classifier.py       # GPT-4o-mini article classification
+    ├── excel_writer.py     # openpyxl Excel file generation
+    ├── sheets.py           # Google Sheets preset/feedback management
+    └── file_parser.py      # Extract keywords/criteria from .docx files (GPT)
 ```
 
 ---
 
-## 설치 및 실행
+## Installation & Setup
 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-### 필요한 Secrets
+### Required Secrets
 
-Streamlit Cloud의 Secrets 또는 로컬의 `.streamlit/secrets.toml`에 설정합니다.
+Configure in Streamlit Cloud Secrets or locally in `.streamlit/secrets.toml`.
 
 ```toml
 OPENAI_API_KEY      = "sk-..."
 NAVER_CLIENT_ID     = "..."
 NAVER_CLIENT_SECRET = "..."
 GOOGLE_SHEET_ID     = "..."
-APP_PASSWORD        = "..."   # 선택사항
+APP_PASSWORD        = "..."   # Optional
 
 [gcp_service_account]
 type = "service_account"
@@ -133,18 +133,18 @@ project_id = "..."
 private_key_id = "..."
 private_key = "..."
 client_email = "..."
-# ... (Google 서비스 계정 JSON 필드)
+# ... (Google service account JSON fields)
 ```
 
 ---
 
-## 기술 스택
+## Tech Stack
 
-| 구분 | 사용 기술 |
-|------|-----------|
-| UI 프레임워크 | Streamlit |
-| AI 분류 | OpenAI GPT-4o-mini |
-| 뉴스 수집 | Naver Search API, BeautifulSoup (Daum) |
-| 엑셀 출력 | openpyxl |
-| 프리셋/피드백 저장 | Google Sheets (gspread) |
-| 데이터 처리 | pandas |
+| Category | Technology |
+|----------|------------|
+| UI Framework | Streamlit |
+| AI Classification | OpenAI GPT-4o-mini |
+| News Collection | Naver Search API, BeautifulSoup (Daum) |
+| Excel Export | openpyxl |
+| Preset/Feedback Storage | Google Sheets (gspread) |
+| Data Processing | pandas |
