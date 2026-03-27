@@ -28,23 +28,17 @@ User Input
     │
     ▼
 STEP 1. Article Collection
-    Naver API ───┐
-                 ├──▶ Merge all results
-    Daum Scraper─┘       │
-                         ▼
-                  Deduplicate by URL
-                  (same article: merge keywords)
-                         │
-                         ▼
-                  Sort by search engine, then datetime ascending
+    Naver API + Daum Scraper → Merge all results
+    → Deduplicate by URL (same article: merge keywords)
+    → Sort by search engine, then datetime ascending
     │
     ▼
 STEP 2. AI Classification (GPT-4o-mini)
     Previous feedback included as few-shot examples
     Per-article result:
-      ├ One of the user-defined categories (when confident)
-      ├ Pending     — ambiguous or hard-to-judge articles
-      └ Not Applicable — articles clearly unrelated to any criteria
+      · One of the user-defined categories (when confident)
+      · Pending        — ambiguous or hard-to-judge articles
+      · Not Applicable — articles clearly unrelated to any criteria
     │
     ▼
 STEP 3. Excel Generation
