@@ -268,4 +268,5 @@ JA: dict[str, str] = {
 
 
 def get_strings(lang: str) -> dict[str, str]:
+    """Return the string dictionary for the given language code."""
     return JA if lang == "ja" else KO
